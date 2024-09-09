@@ -3,9 +3,12 @@ import AdminLayout from "../../components/layout/AdminLayout";
 import Table from "../../components/shared/Table";
 import { dashboardData } from "../../constants/sampleData";
 import { fileFormat, transformImage } from "../../lib/features";
-import { Avatar, Box, Stack } from "@mui/material";
+import { Avatar, Box, Skeleton, Stack } from "@mui/material";
 import moment from "moment";
 import RenderAttachement from "../../components/shared/RenderAttachement";
+import { useFetchData } from "6pp";
+import { useErrors } from "../../hooks/hook";
+import { server } from "../../constants/config";
 
 const columns = [
   {
@@ -84,29 +87,46 @@ const columns = [
 ];
 
 const MessageManagement = () => {
+  const { loading, data, error } = useFetchData(
+    `${server}/api/v1/admin/messages`,
+    "dashboard-messages"
+  );
+
+  useErrors([
+    {
+      isError: error,
+      error: error,
+    },
+  ]);
   const [rows, setRows] = useState([]);
 
   useEffect(() => {
-    setRows(
-      dashboardData.messages.map((i) => ({
-        ...i,
-        id: i._id,
-        sender: {
-          name: i.sender.name,
-          avatar: transformImage(i.sender.avatar, 50),
-        },
-        createdAt: moment(i.createdAt).format("MMM Do YYYY, h:mm:ss a"),
-      }))
-    );
-  }, []);
+    if (data) {
+      setRows(
+        data?.transformedMessages.map((i) => ({
+          ...i,
+          id: i._id,
+          sender: {
+            name: i.sender.name,
+            avatar: transformImage(i?.sender?.avatar?.url, 50),
+          },
+          createdAt: moment(i.createdAt).format("MMM Do YYYY, h:mm:ss a"),
+        }))
+      );
+    }
+  }, [data]);
   return (
     <AdminLayout>
-      <Table
-        heading={"All Messages"}
-        columns={columns}
-        rows={rows}
-        rowHeight={200}
-      />
+      {loading ? (
+        <Skeleton />
+      ) : (
+        <Table
+          heading={"All Messages"}
+          columns={columns}
+          rows={rows}
+          rowHeight={200}
+        />
+      )}
     </AdminLayout>
   );
 };

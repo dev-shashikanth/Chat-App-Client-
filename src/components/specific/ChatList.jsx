@@ -1,5 +1,5 @@
 import { Stack } from "@mui/material";
-import React from "react";
+import React, { useEffect } from "react";
 import ChatItem from "../shared/ChatItem";
 
 const ChatList = ({
@@ -23,6 +23,8 @@ const ChatList = ({
         const newMessageAlert = newMessagesAlert.find(
           ({ chatId }) => chatId === _id
         );
+
+        // console.log("new message alert", newMessageAlert);
 
         const isOnline = members.some((member) => onlineUsers.includes(_id));
         return (

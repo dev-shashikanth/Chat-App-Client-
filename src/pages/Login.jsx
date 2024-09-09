@@ -1,4 +1,6 @@
 /* eslint-disable no-unused-vars */
+import { useFileHandler, useInputValidation } from "6pp";
+import { CameraAlt as CameraAltIcon } from "@mui/icons-material";
 import {
   Avatar,
   Button,
@@ -9,14 +11,19 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import axios from "axios";
 import React, { useState } from "react";
-import { CameraAlt as CameraAltIcon } from "@mui/icons-material";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
 import { VisuallyHiddenInput } from "../components/styles/StylesComponents";
-import { useFileHandler, useInputValidation } from "6pp";
-import { userNameValidator } from "../utils/validators";
 import { bgGradient } from "../constants/color";
+import { server } from "../constants/config";
+import { userExists } from "../redux/reducers/auth";
+import { userNameValidator } from "../utils/validators";
 
 const Login = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const [isLogin, setIsLogin] = useState(true);
 
   const toggleLogin = () => setIsLogin((prev) => !prev);
@@ -28,11 +35,78 @@ const Login = () => {
 
   const avatar = useFileHandler("single", 2);
 
-  const handleLogin = (e) => {
+  const dispatch = useDispatch();
+
+  const handleLogin = async (e) => {
+    setIsLoading(true);
     e.preventDefault();
+
+    const toastId = toast.loading("Logging In...");
+
+    const config = {
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    try {
+      const { data } = await axios.post(
+        `${server}/api/v1/user/login`,
+        {
+          username: username.value,
+          password: password.value,
+        },
+        config
+      );
+      dispatch(userExists(data.user));
+      toast.success(data.message, {
+        id: toastId,
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message || "something went wrong", {
+        id: toastId,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-  const handleSignUp = (e) => {
+
+  const handleSignUp = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
+    const toastId = toast.loading("Signing up...");
+    const config = {
+      widthCredentials: true,
+      headers: {
+        "Content-type": "multipart/form-data",
+      },
+    };
+    const formData = new FormData();
+
+    formData.append("avatar", avatar.file);
+    formData.append("name", name.value);
+    formData.append("bio", bio.value);
+    formData.append("username", username.value);
+    formData.append("password", password.value);
+
+    try {
+      const { data } = await axios.post(
+        `${server}/api/v1/user/new`,
+        formData,
+        config
+      );
+      dispatch(userExists(data.user));
+      toast.success(data.message, { id: toastId });
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Something went wrong", {
+        id: toastId,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <div
@@ -91,6 +165,7 @@ const Login = () => {
                   color="primary"
                   type="submit"
                   fullWidth
+                  disabled={isLoading}
                 >
                   Login
                 </Button>
@@ -103,6 +178,7 @@ const Login = () => {
                   color="primary"
                   fullWidth
                   onClick={toggleLogin}
+                  disabled={isLoading}
                 >
                   Sign Up Instead
                 </Button>
@@ -209,6 +285,7 @@ const Login = () => {
                   color="primary"
                   type="submit"
                   fullWidth
+                  disabled={isLoading}
                 >
                   Sign UP
                 </Button>
@@ -221,6 +298,7 @@ const Login = () => {
                   color="primary"
                   fullWidth
                   onClick={toggleLogin}
+                  disabled={isLoading}
                 >
                   Login In Instead
                 </Button>

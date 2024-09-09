@@ -8,20 +8,29 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CameraAlt as CameraAltIcon } from "@mui/icons-material";
 import { VisuallyHiddenInput } from "../../components/styles/StylesComponents";
 import { bgGradient } from "../../constants/color";
 import { useInputValidation } from "6pp";
 import { Navigate } from "react-router-dom";
-
-const isAdmin = true;
+import { useDispatch, useSelector } from "react-redux";
+import { adminLogin, getAdminDetails } from "../../redux/thunks/admin";
 
 const AdminLogin = () => {
+  const dispatch = useDispatch();
+  const { isAdmin } = useSelector((state) => state.auth);
   const secretKey = useInputValidation("");
-  const handleSubmit = () => {};
+  const handleSubmit = (e) => {
+    dispatch(adminLogin(secretKey.value));
+    e.preventDefault();
+  };
 
-  if (isAdmin) return <Navigate to="/admin" />;
+  useEffect(() => {
+    dispatch(getAdminDetails());
+  }, [dispatch]);
+
+  if (isAdmin) return <Navigate to="/admin/dashboard" />;
   return (
     <div
       style={{

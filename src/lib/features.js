@@ -1,26 +1,28 @@
 import moment from "moment";
 
 const fileFormat = (url = "") => {
-  const fileExtension = url.split("./").pop();
-  if (
-    fileExtension === "mp4" ||
-    fileExtension === "webm" ||
-    fileExtension === "ogg"
-  )
+  const fileExt = url.split(".").pop();
+
+  if (fileExt === "mp4" || fileExt === "webm" || fileExt === "ogg")
     return "video";
-  if (fileExtension === "mp3" || fileExtension === "wav") return "audio";
+
+  if (fileExt === "mp3" || fileExt === "wav") return "audio";
   if (
-    fileExtension === "png" ||
-    fileExtension === "jpg" ||
-    fileExtension === "jpeg" ||
-    fileExtension === "gif"
+    fileExt === "png" ||
+    fileExt === "jpg" ||
+    fileExt === "jpeg" ||
+    fileExt === "gif"
   )
     return "image";
 
   return "file";
 };
 
-const transformImage = (url = "", width = "100") => url;
+const transformImage = (url = "", width = "100") => {
+  const newUrl = url?.replace("upload/", `upload/dpr_auto/w_${width}/`) || "";
+
+  return newUrl;
+};
 
 const getLast7Days = () => {
   const currentData = moment();
@@ -34,4 +36,12 @@ const getLast7Days = () => {
   return last7Days;
 };
 
-export { fileFormat, transformImage, getLast7Days };
+const getOrSaveFromStorage = ({ key, value, get }) => {
+  if (get)
+    return localStorage.getItem(key)
+      ? JSON.parse(localStorage.getItem(key))
+      : null;
+  else localStorage.setItem(key, JSON.stringify(value));
+};
+
+export { fileFormat, transformImage, getLast7Days, getOrSaveFromStorage };

@@ -4,20 +4,49 @@ import {
   Dialog,
   DialogTitle,
   ListItem,
+  Skeleton,
   Stack,
   Typography,
 } from "@mui/material";
 import React, { memo } from "react";
-import { sampleNotifications } from "../../constants/sampleData";
+import { useDispatch, useSelector } from "react-redux";
+import { useErrors } from "../../hooks/hook";
+import {
+  useAcceptFriendRequestMutation,
+  useGetNotificationQuery,
+} from "../../redux/api/api";
+import { setIsNotification } from "../../redux/reducers/misc";
 
 const Notifications = () => {
-  const friendRequestHandler = ({ _id, accept }) => {};
+  const dispatch = useDispatch();
+  const { isLoading, data, error, isError } = useGetNotificationQuery();
+  console.log(data);
+  const { isNotification } = useSelector((state) => state.misc);
+  const [acceptRequest] = useAcceptFriendRequestMutation();
+  const friendRequestHandler = async ({ _id, accept }) => {
+    dispatch(setIsNotification(false));
+    try {
+      const res = await acceptRequest({ requestId: _id, accept });
+      if (res.data?.success) {
+        console.log("user socket here");
+        toast.success(res.data.message);
+      } else {
+        toast.error("something went wrong");
+        console.log("error");
+      }
+    } catch (error) {}
+  };
+
+  const closeHandler = () => dispatch(setIsNotification(false));
+  useErrors([{ error, isError }]);
   return (
-    <Dialog open>
+    <Dialog open={isNotification} onClose={closeHandler}>
       <Stack p={{ xs: "1rem", sm: "2rem" }} maxWidth={"25rem"}>
         <DialogTitle>Notofications</DialogTitle>
-        {sampleNotifications.length > 0 ? (
-          sampleNotifications.map(({ sender, _id }) => (
+        {isLoading ? (
+          <Skeleton />
+        ) : data?.allRequests.length > 0 ? (
+          data?.allRequests.map(({ sender, _id }) => (
             <NotificationItem
               sender={sender}
               _id={_id}
